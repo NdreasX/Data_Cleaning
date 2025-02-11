@@ -74,6 +74,21 @@ if uploaded_file is not None:
         if st.checkbox("Hapus missing values"):
             df.dropna(inplace=True)
         
+        if st.checkbox("Ingin menukar value antar kolom?"):
+            row_index = st.number_input("Masukkan index baris untuk ditukar (index mulai dari 0)", min_value=0, max_value=len(df)-1, step=1)
+            
+            col1, col2 = st.selectbox("Pilih kolom pertama", df.columns.tolist(), key="swap_col1"), \
+                        st.selectbox("Pilih kolom kedua", df.columns.tolist(), key="swap_col2")
+            
+            if st.button("Tukar value"):
+                if col1 in df.columns and col2 in df.columns:
+                    df.at[row_index, col1], df.at[row_index, col2] = df.at[row_index, col2], df.at[row_index, col1]
+                    st.success(f"Berhasil menukar value pada baris {row_index} dari kolom '{col1}' ke '{col2}'!")
+                    st.write("### Data Setelah Pertukaran:")
+                    st.dataframe(df)
+                else:
+                    st.error("Kolom yang dipilih tidak valid.")
+
         
         st.write("### Data Setelah Preprocessing:")
         st.dataframe(df)
