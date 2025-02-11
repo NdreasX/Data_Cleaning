@@ -74,8 +74,8 @@ if uploaded_file is not None:
         if st.checkbox("Hapus missing values"):
             df.dropna(inplace=True)
         
-        if st.checkbox("Ingin menukar value antar kolom?"):
-            row_index = st.number_input("Masukkan index baris untuk ditukar (index mulai dari 0)", min_value=0, max_value=len(df)-1, step=1)
+        if st.checkbox("Ingin menukar value antara dua kolom?"):
+            row_index = st.number_input("Masukkan nomor baris untuk ditukar (index mulai dari 0)", min_value=0, max_value=len(df)-1, step=1)
             
             col1, col2 = st.selectbox("Pilih kolom pertama", df.columns.tolist(), key="swap_col1"), \
                         st.selectbox("Pilih kolom kedua", df.columns.tolist(), key="swap_col2")
@@ -94,7 +94,7 @@ if uploaded_file is not None:
         st.dataframe(df)
         
         
-        if not df.empty:
+        if st.checkbox("Group By"):
             group_by_column = st.selectbox("Pilih kolom untuk Group By", df.columns.tolist())
             if group_by_column:
                 grouped_data = {name: pd.DataFrame(group) for name, group in df.groupby(group_by_column)}
