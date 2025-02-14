@@ -4,7 +4,7 @@ import numpy as np
 import re
 from sklearn.preprocessing import LabelEncoder
 
-st.title("Data Cleaning & Preprocessing by NdreasX")
+st.title("Data Cleaning & Preprocessing by NdreasX_")
 
 
 uploaded_file = st.file_uploader("Upload file CSV atau Excel", type=["csv", "xlsx"])
@@ -14,16 +14,17 @@ if uploaded_file is not None:
     if uploaded_file.name.endswith(".csv"):
         df = pd.read_csv(uploaded_file)
     else:
-        df = pd.read_excel(uploaded_file)
+        excel_file = pd.ExcelFile(uploaded_file)
+        sheet_name = st.selectbox("Pilih sheet yang ingin digunakan", excel_file.sheet_names)
+        df = pd.read_excel(uploaded_file, sheet_name=sheet_name)
     
     st.write("### Data Awal:")
     st.dataframe(df)
     
     if "selected_columns" not in st.session_state:
         st.session_state.selected_columns = []
-
-    column_options = ["Semua Kolom"] + df.columns.tolist()
-
+        column_options = ["Semua Kolom"] + df.columns.tolist()
+    
     valid_defaults = [col for col in st.session_state.selected_columns if col in column_options]
 
     selected_columns = st.multiselect(
@@ -31,7 +32,7 @@ if uploaded_file is not None:
         column_options,
         default=valid_defaults
     )
-
+    
     if "Semua Kolom" in selected_columns:
         if set(st.session_state.selected_columns) != set(df.columns.tolist()):  
             st.session_state.selected_columns = df.columns.tolist()
@@ -80,16 +81,19 @@ if uploaded_file is not None:
                     df[col] = le.fit_transform(df[col].astype(str))
         
         if st.checkbox("Ingin membersihkan data numerik?"):
+            # Fungsi membersihkan angka dari string
             def clean_numeric(value):
                 if isinstance(value, str):
-                    value = value.replace(',', '').strip()
-                    value = re.sub(r'[^0-9.]', '', value)
+                    value = value.replace(',', '').strip()  # Hilangkan koma dan spasi
+                    value = re.sub(r'[^0-9.]', '', value)   # Hilangkan karakter non-numerik
 
                 try:
                     return "{:.0f}".format(float(value))
                 except (ValueError, TypeError):
-                    return np.nan
-
+                    return ""
+                except Exception:
+                    return value
+            
             def clean_date(value):
                 try:
                     return pd.to_datetime(value, errors="coerce").strftime("%d-%m-%Y")
@@ -111,9 +115,7 @@ if uploaded_file is not None:
                 for col in date_columns:
                     df[col] = df[col].apply(clean_date)
             
-            # Checkbox untuk membersihkan text value dari duplikasi kata
             if st.checkbox("Ingin membersihkan teks dari duplikasi?"):
-                # Text Processing
                 def clean_text(value):
                     if isinstance(value, str):
                         words = [word.strip() for word in value.split(";") if word.strip()]
@@ -127,7 +129,6 @@ if uploaded_file is not None:
                 )
                 for col in text_columns:
                     df[col] = df[col].apply(clean_text)
-        
         
         if st.checkbox("Hapus missing values"):
             df.dropna(inplace=True)
@@ -147,7 +148,27 @@ if uploaded_file is not None:
                 else:
                     st.error("Kolom yang dipilih tidak valid.")
         
-        
+        if st.checkbox("Ingin memindahkan kolom?", key="move_checkbox"):
+            col1 = st.selectbox("Pilih kolom yang ingin dipindahkan", df.columns.tolist(), key="move_col1")
+            col2 = st.selectbox("Pilih kolom referensi", df.columns.tolist(), key="move_col2")
+            direction = st.selectbox("Pilih arah", ["Kanan", "Kiri"], key="move_direction")
+
+            if col1 == col2:
+                st.error("Kolom yang dipilih tidak boleh sama.")
+            elif col1 not in df.columns or col2 not in df.columns:
+                st.error("Kolom yang dipilih tidak valid.")
+            else:
+                if direction == "Kanan":
+                    cols = df.columns.tolist()
+                    cols.insert(cols.index(col2), cols.pop(cols.index(col1)))
+                elif direction == "Kiri":
+                    cols = df.columns.tolist()
+                    cols.insert(cols.index(col2), cols.pop(cols.index(col1)))
+                df = df[cols]
+                st.success(f"Berhasil memindahkan kolom '{col1}' ke {direction.lower()} dari kolom '{col2}'!")
+                # st.write("### Data Setelah Pemindahan:")
+                # st.write(df.head())
+             
         if st.checkbox("Replace Value"):
             replace_column = st.multiselect("Pilih kolom yang ingin diubah nilainya", df.columns.tolist())
             
@@ -161,6 +182,23 @@ if uploaded_file is not None:
                             replace_dict[value] = new_value.lower()
                     df[col] = df[col].replace(replace_dict)
         
+                
+        target_addreas = ['address', 'alamat']
+        df.columns = df.columns.str.lower()
+        target_column = next((col for col in df.columns if col in target_addreas), None)
+
+        if st.checkbox("Ingin membersihkan kolom alamat?"):
+            def clean_address(value):
+                if pd.isna(value) or pd.isnull(value):
+                    return value
+                if isinstance(value, str):
+                    value = value.strip()
+                    if len(value) <= 1 or len(value) < 3:
+                        return ""
+                    return value.strip()
+                return value
+            df[target_column] = df[target_column].apply(clean_address)
+            
         
         selected_columns = df.columns.tolist()
         st.write("### Data Setelah Preprocessing:")
@@ -211,12 +249,8 @@ if uploaded_file is not None:
                                     st.write(f"##### {second_key}")
                                     st.dataframe(data)
 
-            if (grouped_data or second_grouped_data) and st.checkbox("Download hasil Group By sebagai file Excel?"):
-                output_file_name = st.text_input("Masukkan nama file output (tanpa ekstensi)", value="cleaned_data")
-                groupby_choice = st.radio("Pilih hasil Group By yang ingin didownload", ("Group By 1", "Group By 2"))
-
-                if st.button("Download Excel"):
-                    output_file = f"{output_file_name}.xlsx"
+            if grouped_data or second_grouped_data:
+                def download_excel_file(output_file, groupby_choice, grouped_data, second_grouped_data):
                     with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
                         df.to_excel(writer, sheet_name="Complete Data", index=False)
 
@@ -229,11 +263,19 @@ if uploaded_file is not None:
                                     data.to_excel(writer, sheet_name=key[:31], index=False)
 
                     with open(output_file, "rb") as file:
-                        st.download_button(
-                            label="Klik untuk mengunduh",
-                            data=file,
-                            file_name=output_file,
-                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                        )
-                    st.success(f"File {output_file} berhasil dibuat dan siap diunduh!")
+                        st.success(f"File {output_file} berhasil didownload!")
+                
+                if second_grouped_data:
+                    for value, data_dict in second_grouped_data.items():
+                        st.write(f"### Data Grouped by {second_group_by_column} within {value}:")
+                        for second_key, data in data_dict.items():
+                            st.write(f"##### {second_key}")
+                            st.dataframe(data)
 
+                if st.checkbox("Download hasil Group By sebagai file Excel?"):
+                    output_file_name = st.text_input("Masukkan nama file output (tanpa ekstensi)", value="cleaned_data")
+                    groupby_choice = st.radio("Pilih hasil Group By yang ingin didownload", ("Group By 1", "Group By 2"))
+
+                    if st.button("Download Excel"):
+                        output_file = f"{output_file_name}.xlsx"
+                        download_excel_file(output_file, groupby_choice, grouped_data, second_grouped_data)
