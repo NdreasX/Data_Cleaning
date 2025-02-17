@@ -4,11 +4,9 @@ import numpy as np
 import re
 from sklearn.preprocessing import LabelEncoder
 
-st.title("Data Cleaning & Preprocessing by NdreasX_")
-
+st.title("Data Cleaning & Preprocessing")
 
 uploaded_file = st.file_uploader("Upload file CSV atau Excel", type=["csv", "xlsx"])
-
 
 if uploaded_file is not None:
     if uploaded_file.name.endswith(".csv"):
@@ -23,8 +21,9 @@ if uploaded_file is not None:
     
     if "selected_columns" not in st.session_state:
         st.session_state.selected_columns = []
-        column_options = ["Semua Kolom"] + df.columns.tolist()
-    
+
+    column_options = ["Semua Kolom"] + df.columns.tolist()
+
     valid_defaults = [col for col in st.session_state.selected_columns if col in column_options]
 
     selected_columns = st.multiselect(
@@ -32,7 +31,7 @@ if uploaded_file is not None:
         column_options,
         default=valid_defaults
     )
-    
+
     if "Semua Kolom" in selected_columns:
         if set(st.session_state.selected_columns) != set(df.columns.tolist()):  
             st.session_state.selected_columns = df.columns.tolist()
@@ -43,12 +42,9 @@ if uploaded_file is not None:
     
     if selected_columns:
         df = df[selected_columns]
-        
-        
         if st.checkbox("Ingin melakukan rename kolom?"):
             rename_dict = {}
             columns_to_rename = st.multiselect("Pilih kolom yang ingin diubah namanya", df.columns.tolist())
-            
             for col in columns_to_rename:
                 new_name = st.text_input(f"Ubah '{col}' menjadi:", key=f"rename_{col}")
                 if new_name:
@@ -81,19 +77,17 @@ if uploaded_file is not None:
                     df[col] = le.fit_transform(df[col].astype(str))
         
         if st.checkbox("Ingin membersihkan data numerik?"):
-            # Fungsi membersihkan angka dari string
             def clean_numeric(value):
                 if isinstance(value, str):
-                    value = value.replace(',', '').strip()  # Hilangkan koma dan spasi
-                    value = re.sub(r'[^0-9.]', '', value)   # Hilangkan karakter non-numerik
-
+                    value = value.replace(',', '').strip()
+                    value = re.sub(r'[^0-9.]', '', value)
                 try:
                     return "{:.0f}".format(float(value))
                 except (ValueError, TypeError):
                     return ""
                 except Exception:
                     return value
-            
+
             def clean_date(value):
                 try:
                     return pd.to_datetime(value, errors="coerce").strftime("%d-%m-%Y")
@@ -129,6 +123,7 @@ if uploaded_file is not None:
                 )
                 for col in text_columns:
                     df[col] = df[col].apply(clean_text)
+        
         
         if st.checkbox("Hapus missing values"):
             df.dropna(inplace=True)
@@ -197,6 +192,7 @@ if uploaded_file is not None:
                         return ""
                     return value.strip()
                 return value
+
             df[target_column] = df[target_column].apply(clean_address)
             
         
@@ -272,6 +268,7 @@ if uploaded_file is not None:
                             st.write(f"##### {second_key}")
                             st.dataframe(data)
 
+                # Download grouped data as Excel file
                 if st.checkbox("Download hasil Group By sebagai file Excel?"):
                     output_file_name = st.text_input("Masukkan nama file output (tanpa ekstensi)", value="cleaned_data")
                     groupby_choice = st.radio("Pilih hasil Group By yang ingin didownload", ("Group By 1", "Group By 2"))
