@@ -76,11 +76,16 @@ if file1 and file2:
         st.write("Ada data di Data 2 yang Primary Key-nya tidak ditemukan di Data 1.")
         st.write(pd.DataFrame(pk2_tidak_ada_di_pk1))
 
-        kolom_diambil_dari_data2 = st.multiselect(
-            "Pilih Kolom dari Data 2 untuk Ditambahkan ke Hasil",
-            df2.columns.tolist(),
-            default=[primary_key_2]
-        )
+        cek_otomatis = st.checkbox("Otomatis Gabungkan Kolom dengan Nama Sama dari Data 2")
+
+        if cek_otomatis:
+            kolom_diambil_dari_data2 = [kolom_bersih_2[col] for col in kolom_bersih_2 if col in kolom_bersih_1]
+        else:
+            kolom_diambil_dari_data2 = st.multiselect(
+                "Pilih Kolom dari Data 2 untuk Ditambahkan ke Hasil",
+                df2.columns.tolist(),
+                default=[kolom_bersih_2.get(primary_key_2, primary_key_2)]
+            )
 
         for row2 in pk2_tidak_ada_di_pk1:
             pk2 = row2[primary_key_2]
@@ -110,22 +115,18 @@ if file1 and file2:
         kolom_awal.insert(idx_valid1 + 2, "Status")
 
     kolom_awal.remove(compare_col_1)
-
     kolom_akhir = [kol for kol in kolom_awal if kol in hasil_df.columns]
-
     show_status = st.multiselect('pilih status yang ingin ditampilkan', ['Tidak Valid', 'Valid', 'Tidak Ada pada Data 2', 'Tidak Ada pada Data 1'])
+    
     if show_status:
         hasil_df_filtered = hasil_df[hasil_df["Status"].isin(show_status)]
-
         st.write(f"Hasil Validasi ({show_status}):")
         st.dataframe(hasil_df_filtered[kolom_akhir])
-
+    
     if st.checkbox("Unduh hasil validasi sebagai file Excel?"):
         output_file_name = st.text_input("Masukkan nama file output (tanpa ekstensi)", value="hasil_validasi")
-
         if st.button("Download Excel"):
             output_file = f"{output_file_name}.xlsx"
-
             hasil_df_filtered[kolom_akhir].to_excel(output_file, index=False, engine='xlsxwriter')
 
             st.success(f"File berhasil disimpan sebagai {output_file}")
