@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import re
+import io
 from sklearn.preprocessing import LabelEncoder
 
 st.title("Data Cleaning & Preprocessing by NdreasX")
@@ -244,33 +245,32 @@ if uploaded_file is not None:
                                     st.write(f"##### {second_key}")
                                     st.dataframe(data)
 
+            def download_excel_file(groupby_choice, grouped_data, second_grouped_data):
+                output = io.BytesIO()
+                with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+                    df.to_excel(writer, sheet_name="Complete Data", index=False)
+            
+                    if groupby_choice == "Group By 1":
+                        for key, data in grouped_data.items():
+                            data.to_excel(writer, sheet_name=str(key)[:31], index=False)
+                    else:
+                        for group1, group2_dict in second_grouped_data.items():
+                            for key, data in group2_dict.items():
+                                data.to_excel(writer, sheet_name=key[:31], index=False)
+                output.seek(0)
+                return output
+            
             if grouped_data or second_grouped_data:
-                def download_excel_file(output_file, groupby_choice, grouped_data, second_grouped_data):
-                    with pd.ExcelWriter(output_file, engine="xlsxwriter") as writer:
-                        df.to_excel(writer, sheet_name="Complete Data", index=False)
-
-                        if groupby_choice == "Group By 1":
-                            for key, data in grouped_data.items():
-                                data.to_excel(writer, sheet_name=str(key), index=False)
-                        else:
-                            for group1, group2_dict in second_grouped_data.items():
-                                for key, data in group2_dict.items():
-                                    data.to_excel(writer, sheet_name=key[:31], index=False)
-
-                    with open(output_file, "rb") as file:
-                        st.success(f"File {output_file} berhasil didownload!")
-                
-                if second_grouped_data:
-                    for value, data_dict in second_grouped_data.items():
-                        st.write(f"### Data Grouped by {second_group_by_column} within {value}:")
-                        for second_key, data in data_dict.items():
-                            st.write(f"##### {second_key}")
-                            st.dataframe(data)
-
                 if st.checkbox("Download hasil Group By sebagai file Excel?"):
                     output_file_name = st.text_input("Masukkan nama file output (tanpa ekstensi)", value="cleaned_data")
                     groupby_choice = st.radio("Pilih hasil Group By yang ingin didownload", ("Group By 1", "Group By 2"))
-
-                    if st.button("Download Excel"):
-                        output_file = f"{output_file_name}.xlsx"
-                        download_excel_file(output_file, groupby_choice, grouped_data, second_grouped_data)
+            
+                    if st.button("Buat File Excel"):
+                        output_excel = download_excel_file(groupby_choice, grouped_data, second_grouped_data)
+            
+                        st.download_button(
+                            label="Klik di sini untuk Download Excel",
+                            data=output_excel,
+                            file_name=f"{output_file_name}.xlsx",
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        )
