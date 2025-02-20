@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import re
+import io
 
 st.title('Gabung & Validasi Data')
 
@@ -126,7 +127,14 @@ if file1 and file2:
     if st.checkbox("Unduh hasil validasi sebagai file Excel?"):
         output_file_name = st.text_input("Masukkan nama file output (tanpa ekstensi)", value="hasil_validasi")
         if st.button("Download Excel"):
-            output_file = f"{output_file_name}.xlsx"
-            hasil_df_filtered[kolom_akhir].to_excel(output_file, index=False, engine='xlsxwriter')
-
-            st.success(f"File berhasil disimpan sebagai {output_file}")
+            output_file = io.BytesIO()
+            with pd.ExcelWriter(output_file, engine='xlsxwriter') as writer:
+                hasil_df_filtered[kolom_akhir].to_excel(writer, index=False)
+            output_file.seek(0)
+    
+            st.download_button(
+                label="Download Excel",
+                data=output_file,
+                file_name=f"{output_file_name}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
