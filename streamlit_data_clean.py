@@ -4,7 +4,7 @@ import numpy as np
 import re
 from sklearn.preprocessing import LabelEncoder
 
-st.title("Data Cleaning & Preprocessing")
+st.title("Data Cleaning & Preprocessing by NdreasX")
 
 uploaded_file = st.file_uploader("Upload file CSV atau Excel", type=["csv", "xlsx"])
 
@@ -38,13 +38,14 @@ if uploaded_file is not None:
             st.rerun()
     else:
         st.session_state.selected_columns = selected_columns
-
     
     if selected_columns:
         df = df[selected_columns]
+        
         if st.checkbox("Ingin melakukan rename kolom?"):
             rename_dict = {}
             columns_to_rename = st.multiselect("Pilih kolom yang ingin diubah namanya", df.columns.tolist())
+            
             for col in columns_to_rename:
                 new_name = st.text_input(f"Ubah '{col}' menjadi:", key=f"rename_{col}")
                 if new_name:
@@ -81,6 +82,7 @@ if uploaded_file is not None:
                 if isinstance(value, str):
                     value = value.replace(',', '').strip()
                     value = re.sub(r'[^0-9.]', '', value)
+
                 try:
                     return "{:.0f}".format(float(value))
                 except (ValueError, TypeError):
@@ -108,6 +110,7 @@ if uploaded_file is not None:
                 )
                 for col in date_columns:
                     df[col] = df[col].apply(clean_date)
+            
             
             if st.checkbox("Ingin membersihkan teks dari duplikasi?"):
                 def clean_text(value):
@@ -176,7 +179,6 @@ if uploaded_file is not None:
                         if new_value:
                             replace_dict[value] = new_value.lower()
                     df[col] = df[col].replace(replace_dict)
-        
                 
         target_addreas = ['address', 'alamat']
         df.columns = df.columns.str.lower()
@@ -192,14 +194,11 @@ if uploaded_file is not None:
                         return ""
                     return value.strip()
                 return value
-
             df[target_column] = df[target_column].apply(clean_address)
-            
         
         selected_columns = df.columns.tolist()
         st.write("### Data Setelah Preprocessing:")
         st.dataframe(df)
-        
 
         if st.checkbox("Cek Unique Values"):
             check_unique_column = st.selectbox("Pilih kolom untuk melihat Unique Values", selected_columns)
@@ -268,7 +267,6 @@ if uploaded_file is not None:
                             st.write(f"##### {second_key}")
                             st.dataframe(data)
 
-                # Download grouped data as Excel file
                 if st.checkbox("Download hasil Group By sebagai file Excel?"):
                     output_file_name = st.text_input("Masukkan nama file output (tanpa ekstensi)", value="cleaned_data")
                     groupby_choice = st.radio("Pilih hasil Group By yang ingin didownload", ("Group By 1", "Group By 2"))
