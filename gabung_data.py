@@ -153,6 +153,20 @@ st.sidebar.header("Langkah 1: Unggah Data")
 file1 = st.sidebar.file_uploader("Unggah File Data 1 (CSV/Excel)", type=["csv", "xlsx"], key="file1")
 file2 = st.sidebar.file_uploader("Unggah File Data 2 (CSV/Excel)", type=["csv", "xlsx"], key="file2")
 
+with st.expander("Instruksi Proses Operasi", expanded=True):
+    st.markdown(
+        """
+        **Panduan:**
+        1. **Upload Data:** Unggah kedua file data (CSV atau Excel).
+        2. **Konfigurasi:** Pilih primary key (dan kolom validasi jika diperlukan).
+        3. **Operasi:** Pilih mode operasi:
+            - **Gabung & Validasi:** Validasi data dan gabungkan data yang hanya ada di Data 2.
+            - **Validasi Saja:** Hanya validasi data.
+            - **Gabung Data Saja:** Gabungkan kedua data dan gabungkan kolom dengan nama sama.
+        4. **Hasil & Unduh:** Lihat hasil operasi dan unduh sebagai Excel jika diinginkan.
+        """
+    )
+
 df1, df2 = None, None
 if file1:
     if file1.name.endswith(".xlsx"):
@@ -188,20 +202,6 @@ if df1 is not None and df2 is not None:
     if mode in ["Gabung & Validasi", "Validasi Saja"]:
         cmp1 = st.sidebar.selectbox("Pilih Kolom Validasi dari Data 1", df1.columns, key="cmp1")
         cmp2 = st.sidebar.selectbox("Pilih Kolom Validasi dari Data 2", df2.columns, key="cmp2")
-    
-    with st.expander("Instruksi Proses Operasi", expanded=True):
-        st.markdown(
-            """
-            **Panduan:**
-            1. **Upload Data:** Unggah kedua file data (CSV atau Excel).
-            2. **Konfigurasi:** Pilih primary key (dan kolom validasi jika diperlukan).
-            3. **Operasi:** Pilih mode operasi:
-                - **Gabung & Validasi:** Validasi data dan gabungkan data yang hanya ada di Data 2.
-                - **Validasi Saja:** Hanya validasi data.
-                - **Gabung Data Saja:** Gabungkan kedua data dan gabungkan kolom dengan nama sama.
-            4. **Hasil & Unduh:** Lihat hasil operasi dan unduh sebagai Excel jika diinginkan.
-            """
-        )
     
     # ---------------------------
     # Proses Operasi Berdasarkan Mode
