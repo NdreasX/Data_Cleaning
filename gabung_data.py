@@ -1,6 +1,7 @@
 import streamlit as st
 st.set_page_config(page_title="Gabung & Validasi Data", layout="wide", initial_sidebar_state="expanded")
 
+import matplotlib.pyplot as plt
 import pandas as pd
 import re
 import io
@@ -240,6 +241,25 @@ if df1 is not None and df2 is not None:
     st.subheader(f"Hasil Operasi ({mode})")
     st.dataframe(result_df[final_cols], height=300)
     
+    # ---------------------------
+    # Fitur Tambahan: Visualisasi Status Validasi
+    # ---------------------------
+    if mode in ["Validasi Saja", "Gabung & Validasi"]:
+        st.header("Statistik Hasil Validasi")
+        # Hitung jumlah masing-masing status validasi
+        status_counts = result_df["Status"].value_counts()
+
+        # Buat pie chart dengan ukuran yang lebih kecil
+        fig, ax = plt.subplots(figsize=(4, 4))  # Atur ukuran figure sesuai kebutuhan
+        fig.patch.set_facecolor('black')  # Set background color to black
+        ax.pie(status_counts, labels=status_counts.index, autopct='%1.1f%%', startangle=90, textprops={'color':"w"})
+        ax.axis('equal')  # Pastikan pie chart berbentuk lingkaran sempurna
+        st.pyplot(fig)
+
+        # Tampilkan juga ringkasan statistik dalam bentuk tabel
+        st.subheader("Ringkasan Statistik")
+        st.dataframe(status_counts.to_frame().reset_index().rename(columns={'index': 'Status', 'Status': 'Jumlah'}))
+
     # ---------------------------
     # Unduh Hasil
     # ---------------------------
